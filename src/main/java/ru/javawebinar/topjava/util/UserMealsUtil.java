@@ -22,7 +22,7 @@ public class UserMealsUtil {
                 new UserMeal(LocalDateTime.of(2020, Month.JANUARY, 31, 0, 0), "Еда на граничное значение", 300),
                 new UserMeal(LocalDateTime.of(2020, Month.JANUARY, 31, 8, 0), "Завтрак", 1000),
                 new UserMeal(LocalDateTime.of(2020, Month.MARCH, 30, 11, 30), "Обед", 2300),
-                new UserMeal(LocalDateTime.of(2021, Month.JANUARY, 30, 11, 30), "Обед", 775),
+                new UserMeal(LocalDateTime.of(2021, Month.JANUARY, 30, 11, 30), "Обед", 2000),
                 new UserMeal(LocalDateTime.of(2020, Month.JANUARY, 30, 8, 0), "Первый завтрак", 300)
         );
 
@@ -37,13 +37,15 @@ public class UserMealsUtil {
         for (UserMeal meal : meals) {
             if (TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime)) {
                 caloriesAdderByDate.merge(meal.getDateTime().toLocalDate(), meal.getCalories(), Integer::sum);
-                mealsWithExcess.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
-                        (caloriesAdderByDate.getOrDefault(meal.getDateTime().toLocalDate(), 0) > caloriesPerDay)));
             }
         }
-        for (UserMealWithExcess meal : mealsWithExcess) {
-            if (caloriesAdderByDate.getOrDefault(meal.getDateTime().toLocalDate(), 0) > caloriesPerDay) {
-                meal.setExcess(true);
+        for (UserMeal meal : meals) {
+            if (TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime)) {
+                if (caloriesAdderByDate.getOrDefault(meal.getDateTime().toLocalDate(), 0) > caloriesPerDay) {
+                    mealsWithExcess.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(), false));
+                } else {
+                    mealsWithExcess.add(new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(), true));
+                }
             }
         }
         return mealsWithExcess;
@@ -56,7 +58,7 @@ public class UserMealsUtil {
         return meals.stream()
                 .filter(meal -> TimeUtil.isBetweenHalfOpen(meal.getDateTime().toLocalTime(), startTime, endTime))
                 .map(meal -> new UserMealWithExcess(meal.getDateTime(), meal.getDescription(), meal.getCalories(),
-                        caloriesAdderByDate.get(meal.getDateTime().toLocalDate()) > caloriesPerDay))
+                        caloriesAdderByDate.get(meal.getDateTime().toLocalDate()) <= caloriesPerDay))
                 .collect(Collectors.toList());
     }
 }
